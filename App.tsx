@@ -5,113 +5,115 @@
  * @format
  */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useState} from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
+  Dimensions,
   StyleSheet,
   Text,
-  useColorScheme,
+  TouchableOpacity,
   View,
 } from 'react-native';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+import {Container} from './src/components';
+import LinearGradient from 'react-native-linear-gradient';
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const calculatorButtons: any = [
+    ['AC', '+/-', '%', '/'],
+    ['7', '8', '9', '*'],
+    ['4', '5', '6', '-'],
+    ['1', '2', '3', '+'],
+    ['0', '.', '='],
+  ];
+  const [num1, setNum1] = useState('');
+  const [num2, setNum2] = useState('');
+  const [sum, setSum] = useState('');
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const handleClick = (number: any) => {
+    if (number == 'AC') {
+      setNum1('');
+      setNum2('');
+      return;
+    }
+  
+    const containSymbol: boolean = ['%', '/', '*', '+', '-'].some(k => num1.includes(k));
+  
+    if (!['AC', '+/-', '='].includes(number) && !containSymbol) {
+      if (!num1.includes('.') || /\d/.test(number)) {
+        setNum1(prevNum => `${prevNum}${number}`);
+      }
+    } else {
+      setNum2(prevNum => `${prevNum}${number}`);
+    }
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+    <Container>
+      <View>
+        {/* Calculation Area */}
+        <View style={styles.calculationArea}>
+          <Text>{num1}{num2}</Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+        {/* Calculator Buttons */}
+
+        <View>
+          {calculatorButtons.map((row: any, idx: any) => {
+            return (
+              <View style={styles.calculatorRow}>
+                {row.map((num: any, idx2: any) => (
+                  <LinearGradient
+                    start={{x: 0, y: 0}}
+                    colors={['#e7a948', '#000000']}
+                    style={{
+                      ...styles.btnContainer,
+                      width: num === '0' ? '50%' : '25%',
+                    }}>
+                    <TouchableOpacity
+                      onPress={() => handleClick(num)}
+                      style={{
+                        ...styles.btnContainer,
+                        backgroundColor: 'white',
+                        height: '100%',
+                        width: '100%',
+                      }}
+                      key={'key-' + idx + idx2}>
+                      <Text style={styles?.btn}>{num}</Text>
+                    </TouchableOpacity>
+                  </LinearGradient>
+                ))}
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  calculationArea: {
+    height: Dimensions.get('screen').height / 2.4,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  calculatorRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'stretch',
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  btnContainer: {
+    height: Dimensions.get('screen').height / 10,
+    width: '25%',
+    borderRightColor: '#dddbd8',
+    borderRightWidth: 1,
+    borderBottomColor: '#dddbd8',
+    borderBottomWidth: 1,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  highlight: {
-    fontWeight: '700',
+  btn: {
+    fontSize: Dimensions.get('screen').fontScale * 22,
+    color: '#646564',
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
 
