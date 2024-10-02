@@ -1,119 +1,314 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React, {useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   Dimensions,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  Switch,
 } from 'react-native';
-import {Container} from './src/components';
 import LinearGradient from 'react-native-linear-gradient';
 
-function App(): React.JSX.Element {
-  const calculatorButtons: any = [
-    ['AC', '+/-', '%', '/'],
-    ['7', '8', '9', '*'],
-    ['4', '5', '6', '-'],
-    ['1', '2', '3', '+'],
-    ['0', '.', '='],
-  ];
+const calculatorButtons = [
+  ['AC', '+/-', '%', '/'],
+  ['7', '8', '9', 'x'],
+  ['4', '5', '6', '-'],
+  ['1', '2', '3', '+'],
+  ['0', '.', '='],
+];
+
+const App = () => {
   const [num1, setNum1] = useState('');
   const [num2, setNum2] = useState('');
-  const [sum, setSum] = useState('');
+  const [operator, setOperator] = useState('');
+  const [result, setResult] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(false); // Manual dark mode state
+  const [calculationHistory, setCalculationHistory] = useState<any>([]);
 
-  const handleClick = (number: any) => {
-    if (number == 'AC') {
-      setNum1('');
-      setNum2('');
+  const handleClick = (value: any) => {
+    if (value === 'AC') {
+      if (result) {
+        setCalculationHistory([
+          ...calculationHistory,
+          `${num1} ${operator} ${num2} = ${result}`,
+        ]);
+
+        setNum1('');
+        setNum2('');
+        setOperator('');
+        setResult('');
+      }
+
       return;
     }
-  
-    const containSymbol: boolean = ['%', '/', '*', '+', '-'].some(k => num1.includes(k));
-  
-    if (!['AC', '+/-', '='].includes(number) && !containSymbol) {
-      if (!num1.includes('.') || /\d/.test(number)) {
-        setNum1(prevNum => `${prevNum}${number}`);
+
+    if (value === '=') {
+      performCalculation();
+      return;
+    }
+
+    if (['+', '-', 'x', '/'].includes(value)) {
+      if (num1) {
+        setOperator(value);
+      }
+      return;
+    }
+
+    if (value === '+/-') {
+      if (!operator) {
+        setNum1(prevNum => String(parseFloat(prevNum) * -1));
+      } else {
+        setNum2(prevNum => String(parseFloat(prevNum) * -1));
+      }
+      return;
+    }
+
+    if (value === '%') {
+      if (!operator) {
+        setNum1(prevNum => String(parseFloat(prevNum) / 100));
+      } else {
+        setNum2(prevNum => String(parseFloat(prevNum) / 100));
+      }
+      return;
+    }
+
+    if (!operator) {
+      if (!(num1.includes('.') && value === '.')) {
+        setNum1(prevNum => `${prevNum}${value}`);
       }
     } else {
-      setNum2(prevNum => `${prevNum}${number}`);
+      if (!(num2.includes('.') && value === '.')) {
+        setNum2(prevNum => `${prevNum}${value}`);
+      }
     }
   };
 
-  return (
-    <Container>
-      <View>
-        {/* Calculation Area */}
-        <View style={styles.calculationArea}>
-          <Text>{num1}{num2}</Text>
-        </View>
-        {/* Calculator Buttons */}
+  const performCalculation = () => {
+    if (!num1 || !num2 || !operator) return;
 
-        <View>
-          {calculatorButtons.map((row: any, idx: any) => {
-            return (
-              <View style={styles.calculatorRow}>
-                {row.map((num: any, idx2: any) => (
-                  <LinearGradient
-                    start={{x: 0, y: 0}}
-                    colors={['#e7a948', '#000000']}
-                    style={{
-                      ...styles.btnContainer,
-                      width: num === '0' ? '50%' : '25%',
-                    }}>
-                    <TouchableOpacity
-                      onPress={() => handleClick(num)}
-                      style={{
-                        ...styles.btnContainer,
-                        backgroundColor: 'white',
-                        height: '100%',
-                        width: '100%',
-                      }}
-                      key={'key-' + idx + idx2}>
-                      <Text style={styles?.btn}>{num}</Text>
-                    </TouchableOpacity>
-                  </LinearGradient>
-                ))}
-              </View>
-            );
-          })}
+    const number1 = parseFloat(num1);
+    const number2 = parseFloat(num2);
+    let calcResult: number | string = 0;
+
+    switch (operator) {
+      case '+':
+        calcResult = number1 + number2;
+        break;
+      case '-':
+        calcResult = number1 - number2;
+        break;
+      case 'x':
+        calcResult = number1 * number2;
+        break;
+      case '/':
+        calcResult = number2 !== 0 ? number1 / number2 : '';
+        break;
+      default:
+        return;
+    }
+
+    setResult(calcResult.toString());
+    setNum1(calcResult.toString());
+    // setNum2('');
+    // setOperator('');
+  };
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prevState => !prevState); // Toggle the dark mode state
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Background gradient */}
+      <LinearGradient
+        colors={isDarkMode ? ['#1a1a1a', '#333333'] : ['#d4a15a', '#ffffff']}
+        style={styles.gradientBackground}>
+        {/* Toggle for Dark Mode */}
+        <View style={styles.toggleContainer}>
+          <Switch
+            value={isDarkMode}
+            onValueChange={toggleDarkMode}
+            thumbColor={isDarkMode ? '#fff' : '#000'}
+            trackColor={{false: '#ddd', true: '#555'}}
+          />
         </View>
-      </View>
-    </Container>
+
+        {/* Display Area */}
+        <View style={styles.calculationArea}>
+          <View style={styles.calculationHistory}>
+            {calculationHistory.map(v => (
+              <Text
+                style={[
+                  styles.historyTextBase,
+                  isDarkMode ? styles.historyTextDark : styles.historyTextLight,
+                ]}>
+                {v}
+              </Text>
+            ))}
+          </View>
+          <View>
+            <Text
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+              numberOfLines={1}
+              style={[
+                styles.resultText,
+                isDarkMode ? styles.textDark : styles.textLight,
+              ]}>
+              {result || `${num1}${operator}${num2}`}
+            </Text>
+          </View>
+        </View>
+
+        {/* Buttons Section */}
+        <View
+          style={[
+            styles.buttonsArea,
+            isDarkMode ? styles.darkButtons : styles.lightButtons,
+          ]}>
+          {calculatorButtons.map((row, rowIndex) => (
+            <View key={rowIndex} style={styles.calculatorRow}>
+              {row.map((num, buttonIndex) => (
+                <TouchableOpacity
+                  key={`${rowIndex}-${buttonIndex}`}
+                  onPress={() => handleClick(num)}
+                  style={[
+                    styles.buttonContainer,
+                    isDarkMode
+                      ? styles.buttonContainerDarkThemeBorder
+                      : styles.buttonContainerLightThemeBorder,
+                    num === '0' ? styles.buttonWide : null,
+                  ]}>
+                  <View
+                    style={
+                      !isDarkMode
+                        ? styles.buttonBackgroundDark
+                        : styles.buttonBackground
+                    }>
+                    <Text
+                      style={
+                        !isDarkMode ? styles.buttonTextDark : styles.buttonText
+                      }>
+                      {num}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))}
+        </View>
+      </LinearGradient>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
+  calculationHistory: {
+    flexDirection: 'column',
+    gap: 3,
+    width: '100%',
+    marginBottom: 20,
+  },
+  historyTextBase: {
+    fontSize: 18,
+    textAlign: 'right',
+  },
+  historyTextDark: {
+    color: '#c3c3c3',
+  },
+  historyTextLight: {
+    color: '#777',
+  },
+  container: {
+    flex: 1,
+  },
+  gradientBackground: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  toggleContainer: {
+    position: 'absolute',
+    top: 50,
+    left: 10,
+  },
   calculationArea: {
-    height: Dimensions.get('screen').height / 2.4,
+    width: '100%',
+    height: Dimensions.get('screen').height / 3.5,
+    justifyContent: 'flex-end',
+    paddingRight: 20,
+  },
+  resultText: {
+    fontSize: Dimensions.get('screen').fontScale * 60,
+    fontWeight: '400',
+    textAlign: 'right',
+    height: 50,
+  },
+  textLight: {
+    color: '#000',
+  },
+  textDark: {
+    color: '#FFF',
+  },
+  buttonsArea: {
+    width: '100%',
+    // borderTopLeftRadius: 30,
+    // borderTopRightRadius: 30,
+    // paddingHorizontal: 10,
+    // paddingVertical: 15,
+  },
+  lightButtons: {
+    backgroundColor: '#FFF',
+  },
+  darkButtons: {
+    backgroundColor: '#333',
   },
   calculatorRow: {
-    width: '100%',
     flexDirection: 'row',
-    alignItems: 'stretch',
+    justifyContent: 'space-between',
+    // marginBottom: 10,
   },
-  btnContainer: {
-    height: Dimensions.get('screen').height / 10,
-    width: '25%',
-    borderRightColor: '#dddbd8',
-    borderRightWidth: 1,
-    borderBottomColor: '#dddbd8',
+  buttonContainerLightThemeBorder: {
+    borderRightColor: 'lightgrey',
+    borderBottomColor: 'lightgrey',
+  },
+  buttonContainerDarkThemeBorder: {
+    borderRightColor: '#fff',
+    borderBottomColor: '#fff',
+  },
+  buttonContainer: {
+    flex: 1,
     borderBottomWidth: 1,
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRightWidth: 1,
+    // marginHorizontal: 5,
+    height: Dimensions.get('screen').height / 12,
   },
-  btn: {
-    fontSize: Dimensions.get('screen').fontScale * 22,
-    color: '#646564',
+  buttonWide: {
+    flex: 2,
+  },
+  buttonBackgroundDark: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // borderRadius: 10,
+    backgroundColor: '#fff', // Can be adjusted for light/dark modes
+  },
+  buttonBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // borderRadius: 10,
+    backgroundColor: '#444', // Can be adjusted for light/dark modes
+  },
+  buttonTextDark: {
+    fontSize: 28,
     fontWeight: '500',
-    textAlign: 'center',
+    color: '#555', // Adjust for different themes
+  },
+  buttonText: {
+    fontSize: 28,
+    fontWeight: '500',
+    color: '#FFF', // Adjust for different themes
   },
 });
 
