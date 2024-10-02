@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
   Switch,
+  FlatList,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -106,8 +107,12 @@ const App = () => {
       default:
         return;
     }
+    if (calcResult.toString().includes('.')) {
+      setResult(Number(calcResult).toFixed(2).toString());
+    } else {
+      setResult(calcResult.toString());
+    }
 
-    setResult(calcResult.toString());
     setNum1(calcResult.toString());
     // setNum2('');
     // setOperator('');
@@ -136,15 +141,40 @@ const App = () => {
         {/* Display Area */}
         <View style={styles.calculationArea}>
           <View style={styles.calculationHistory}>
-            {calculationHistory.map(v => (
-              <Text
+            <FlatList
+              data={calculationHistory}
+              renderItem={({item}) => (
+                <Text
+                  style={[
+                    styles.historyTextBase,
+                    isDarkMode
+                      ? styles.historyTextDark
+                      : styles.historyTextLight,
+                  ]}>
+                  {item}
+                </Text>
+              )}
+            />
+            {calculationHistory.length > 0 && (
+              <TouchableOpacity
+                onPress={() => setCalculationHistory([])}
                 style={[
-                  styles.historyTextBase,
-                  isDarkMode ? styles.historyTextDark : styles.historyTextLight,
+                  styles.clearHistoryBtn,
+                  isDarkMode
+                    ? styles.clearHistoryBtnDark
+                    : styles.clearHistoryBtnLight,
                 ]}>
-                {v}
-              </Text>
-            ))}
+                <Text
+                  style={[
+                    styles.clearHistoryText,
+                    isDarkMode
+                      ? styles.clearHistoryTextDark
+                      : styles.clearHistoryTextLight,
+                  ]}>
+                  Clear History
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
           <View>
             <Text
@@ -203,8 +233,27 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
+  clearHistoryBtn: {
+    borderRadius: 18,
+    width: 100,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  clearHistoryBtnLight: {
+    backgroundColor: '#ffffff',
+  },
+  clearHistoryBtnDark: {
+    backgroundColor: '#ffffff',
+  },
+  clearHistoryText: {},
+  clearHistoryTextLight: {},
+  clearHistoryTextDark: {},
   calculationHistory: {
     flexDirection: 'column',
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
     gap: 3,
     width: '100%',
     marginBottom: 20,
